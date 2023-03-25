@@ -388,8 +388,8 @@ get_asdf_config_value() {
   local config_path=${ASDF_CONFIG_FILE:-"$HOME/.asdfrc"}
   local default_config_path=${ASDF_CONFIG_DEFAULT_FILE:-"$(asdf_dir)/defaults"}
 
-  local local_config_path
-  local_config_path="$(find_file_upwards ".asdfrc")"
+  find_file_upwards ".asdfrc"
+  local local_config_path="$REPLY"
 
   get_asdf_config_value_from_file "$local_config_path" "$key" ||
     get_asdf_config_value_from_file "$config_path" "$key" ||
@@ -455,19 +455,37 @@ get_plugin_source_url() {
 
 find_tool_versions() {
   find_file_upwards "$(version_file_name)"
+  local tool_versions="$REPLY"
+
+  local output=
+  if ! output=$(file -k "$tool_versions"); then
+    printf '%s\n' "Failed to execute 'file'. Aborting..." >&2
+    exit 1
+  fi
+
+  if [[ $output == *'CRLF line terminators'* ]]; then
+    printf '%s\n' "File '$tool_versions' improperly contains CRLF line terminators. Aborting..." >&2
+    exit 1
+  fi
+
+  printf '%s\n' "$tool_versions"
 }
 
 find_file_upwards() {
+  unset -v REPLY; REPLY=
+
   local name="$1"
   local search_path
   search_path=$PWD
   while [ "$search_path" != "/" ]; do
     if [ -f "$search_path/$name" ]; then
-      printf "%s\n" "${search_path}/$name"
+      REPLY="${search_path}/$name"
       return 0
     fi
     search_path=$(dirname "$search_path")
   done
+
+  return 1
 }
 
 resolve_symlink() {
@@ -798,7 +816,7 @@ with_shim_executable() {
     local preset_plugin_versions
     preset_plugin_versions=()
     local closest_tool_version
-    closest_tool_version=$(find_tool_versions)
+    closest_tool_version=$(find_tool_versions) || exit $?
 
     local shim_plugins
     IFS=$'\n' read -rd '' -a shim_plugins <<<"$(shim_plugins "$shim_name")"

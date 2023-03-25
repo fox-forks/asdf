@@ -71,7 +71,7 @@ install_local_tool_versions() {
   local some_plugin_not_installed
 
   local tool_versions_path
-  tool_versions_path=$(find_tool_versions)
+  tool_versions_path=$(find_tool_versions) || exit $?
 
   # Locate all the plugins installed in the system
   local plugins_installed

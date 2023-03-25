@@ -22,7 +22,7 @@ version_command() {
   if [ "$cmd" = "global" ]; then
     file="$HOME/$file_name"
   elif [ "$cmd" = "local-tree" ]; then
-    file=$(find_tool_versions)
+    file=$(find_tool_versions) || exit $?
   else # cmd = local
     file="$PWD/$file_name"
   fi
