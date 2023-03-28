@@ -51,6 +51,10 @@ jobs:
     # - changes to cli
     if: ${{ needs.detect-changes.outputs.cli == 'true' }}
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        bash-version:
+          ["3.2", "4.0", "4.1", "4.2", "4.3", "4.4", "5.0", "5.1", "5.2"]
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
@@ -87,7 +91,8 @@ jobs:
           echo "$HOME/bats-core/bin" >>"$GITHUB_PATH"
 
       - name: Run tests
-        run: scripts/test.bash
+        run: |
+          time docker run -e 'GITHUB_API_TOKEN' --mount type=bind,src="$PWD",dst="$PWD" bash:${{ matrix.bash-version }} scripts/test.bash
         env:
           GITHUB_API_TOKEN: ${{ github.token }}
 
