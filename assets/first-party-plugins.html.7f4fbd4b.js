@@ -1,0 +1,1 @@
+const t=JSON.parse('{"key":"v-821a1274","path":"/contribute/first-party-plugins.html","title":"First-Party Plugins","lang":"en-US","frontmatter":{},"excerpt":"","headers":[],"git":{"updatedTime":1627017981000,"contributors":[{"name":"James Hegedus","email":"jthegedus@hey.com","commits":1}]},"filePathRelative":"contribute/first-party-plugins.md"}');export{t as data};
