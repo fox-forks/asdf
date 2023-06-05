@@ -424,7 +424,7 @@ asdf global nodejs latest
 
 `$HOME/.tool-versions` 文件内容将会如下所示：
 
-```
+```text
 nodejs 16.5.0
 ```
 
@@ -440,7 +440,7 @@ asdf local nodejs latest
 
 `$PWD/.tool-versions` 文件内容将会如下所示：
 
-```
+```text
 nodejs 16.5.0
 ```
 
@@ -450,7 +450,7 @@ nodejs 16.5.0
 
 [`asdf-nodejs`](https://github.com/asdf-vm/asdf-nodejs/) 支持从 `.nvmrc` 和 `.node-version` 文件进行迁移。为了启用此功能，请在 `asdf` 配置文件 `$HOME/.asdfrc` 中加入以下内容：
 
-```
+```text
 legacy_version_file = yes
 ```
 

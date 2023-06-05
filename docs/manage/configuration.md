@@ -54,7 +54,7 @@ Edit the file directly or use `asdf local` (or `asdf global`) which updates it.
 
 The `.asdfrc` file defines the user's machine specific configuration.
 
-`${HOME}/.asdfrc` is the default location used by asdf. This can be set with the [Environment Variable `ASDF_CONFIG_FILE`](#asdfconfigfile).
+`${HOME}/.asdfrc` is the default location used by asdf. This can be set with the [Environment Variable `ASDF_CONFIG_FILE`](#asdf_config_file).
 
 The below file shows the required format with the default values:
 
@@ -183,7 +183,7 @@ The location where `asdf` will install plugins, shims and tool versions. Can be 
 
 ### `ASDF_CONCURRENCY`
 
-Number of cores to use when compiling the source code. If set, this value takes precedence over the asdf config `concurrency` value. 
+Number of cores to use when compiling the source code. If set, this value takes precedence over the asdf config `concurrency` value.
 
 - If Unset: the asdf config `concurrency` value is used.
 - Usage: `export ASDF_CONCURRENCY=32`
@@ -195,7 +195,7 @@ Following a simple asdf setup with:
 - a Bash Shell
 - an installation location of `$HOME/.asdf`
 - installed via Git
-- NO environment variables set 
+- NO environment variables set
 - NO custom `.asdfrc` file
 
 would result in the following outcomes:

@@ -22,4 +22,4 @@ Pretendemos executar o conjunto de testes no WSL2 quando o suporte ao host runne
 
 ## Shell não detecta shims recém-instalados?
 
-Se `asdf reshim` não está resolvendo seu problema, então é mais provável devido ao sourcing de`asdf.sh` ou `asdf.fish` _não_ estar no ** BOTTOM ** de seu arquivo de configuração Shell (`.bash_profile`, `.zshrc`, `config.fish`, etc). Ele precisa ser fornecido **DEPOIS** de você definir seu `$PATH` e **DEPOIS** de ter fornecido seu framework (oh-meu-zsh etc), se houver.
+Se `asdf reshim` não está resolvendo seu problema, então é mais provável devido ao sourcing de`asdf.sh` ou `asdf.fish` _não_ estar no **BOTTOM** de seu arquivo de configuração Shell (`.bash_profile`, `.zshrc`, `config.fish`, etc). Ele precisa ser fornecido **DEPOIS** de você definir seu `$PATH` e **DEPOIS** de ter fornecido seu framework (oh-meu-zsh etc), se houver.

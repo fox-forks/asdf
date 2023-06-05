@@ -49,7 +49,7 @@ asdf plugin list all
 ```
 
 Veja [Plugins Shortname Index](https://github.com/asdf-vm/asdf-plugin-template) para toda a lista de nomes curtos de plugins.
- 
+
 ## Atualizar
 
 ```shell:no-line-numbers

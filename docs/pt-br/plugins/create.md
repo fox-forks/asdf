@@ -8,7 +8,6 @@ Um plugin é um repositório git, com alguns scripts executáveis, para dar supo
 
 ## Scripts obrigatórios
 
-
 - `bin/list-all` - lista todas as versões instaláveis
 - `bin/download` - baixe o código fonte ou binário para a versão especificada
 - `bin/install` - instala a versão especificada
@@ -60,7 +59,7 @@ O script de instalação deve sair com um status de `0` quando a instalação fo
 
 Se possível, o script deve apenas colocar os arquivos no diretório `ASDF_INSTALL_PATH` uma vez que a compilação e instalação da ferramenta são consideradas bem sucedidas pelo script de instalação. asdf [verifica a existência](https://github.com/asdf-vm/asdf/blob/242d132afbf710fe3c7ec23c68cec7bdd2c78ab5/lib/utils.sh#L44) do diretório `ASDF_INSTALL_PATH` para determinar se essa versão da ferramenta está instalado. Se o diretório `ASDF_INSTALL_PATH` for preenchido no início do processo de instalação, outros comandos asdf executados em outros terminais durante a instalação podem considerar essa versão da ferramenta instalada, mesmo quando não estiver totalmente instalada.
 
-Se você quiser que seu plugin funcione com asdf versão 0.7._ e anterior e versão 0.8._ e mais recente, verifique a presença da variável de ambiente `ASDF_DOWNLOAD_PATH`.  Se não estiver definido, baixe o código-fonte no retorno de chamada bin/install.  Se estiver definido, suponha que o script `bin/download` já tenha baixado.
+Se você quiser que seu plugin funcione com asdf versão 0.7._e anterior e versão 0.8._ e mais recente, verifique a presença da variável de ambiente `ASDF_DOWNLOAD_PATH`.  Se não estiver definido, baixe o código-fonte no retorno de chamada bin/install.  Se estiver definido, suponha que o script `bin/download` já tenha baixado.
 
 ## Scripts Opcional
 
@@ -170,6 +169,8 @@ foo/
 
 Os usuários agora podem executar
 
+<!-- markdownlint-capture -->
+<!-- markdownlint-disable MD014 -->
 ```shell
 $ asdf foo         # same as running `$ASDF_DATA_DIR/plugins/foo/lib/commands/command.bash`
 $ asdf foo bar     # same as running `$ASDF_DATA_DIR/plugins/foo/lib/commands/command.bash bar`
@@ -177,6 +178,7 @@ $ asdf foo help    # same as running `$ASDF_DATA_DIR/plugins/foo/lib/commands/co
 $ asdf foo bat man # same as running `$ASDF_DATA_DIR/plugins/foo/lib/commands/command-bat-man.bash`
 $ asdf foo bat baz # same as running `$ASDF_DATA_DIR/plugins/foo/lib/commands/command-bat.bash baz`
 ```
+<!-- markdownlint-restore -->
 
 Os autores de plugins podem usar esse recurso para fornecer utilitários relacionados às suas ferramentas,
 ou até mesmo criar plugins que são apenas novas extensões de comando para o próprio asdf.

@@ -246,7 +246,8 @@ Determine the latest stable version of a tool. If absent, the asdf core will `ta
 - Non-stable or release candidate versions should be omitted.
 - A filter query is provided as the first argument to the script. This should be used to filter the output by version number or tool provider.
   - For instance, the output of `asdf list all ruby` from the [ruby plugin](https://github.com/asdf-vm/asdf-ruby) lists versions of Ruby from many providers: `jruby`, `rbx` & `truffleruby` amongst others. The user provided filter could be used by the plugin to filter the semver versions and/or provider.
-    ```
+
+    ```text
     > asdf latest ruby
     3.2.2
     > asdf latest ruby 2
@@ -254,6 +255,7 @@ Determine the latest stable version of a tool. If absent, the asdf core will `ta
     > asdf latest ruby truffleruby
     truffleruby+graalvm-22.3.1
     ```
+
 - Success should exit with `0`.
 - Failure should exit with a non-zero status.
 
@@ -452,6 +454,7 @@ bin tools veggies
 ```
 
 This will instruct asdf to create shims for the files in:
+
 - `"${ASDF_INSTALL_PATH}"/bin`
 - `"${ASDF_INSTALL_PATH}"/tools`
 - `"${ASDF_INSTALL_PATH}"/veggies`
@@ -592,9 +595,11 @@ List legacy configuration filenames for determining the specified version of the
 **Implementation Details**
 
 - Output a space-separated list of filenames.
+
   ```bash:no-line-numbers
   .ruby-version .rvmrc
   ```
+
 - Only applies for users who have enabled the `legacy_version_file` option in their `"${HOME}"/.asdfrc`.
 
 **Environment Variables available to script**
@@ -632,6 +637,7 @@ Parse the legacy file found by asdf to determine the version of the tool. Useful
   - when parsing the same legacy file.
   - regardless of what is installed on the machine or whether the legacy version is valid or complete. Some legacy file formats may not be suitable.
 - Output a single line with the version:
+
   ```bash:no-line-numbers
   1.2.3
   ```
@@ -758,6 +764,8 @@ foo/
 
 Users can now execute:
 
+<!-- markdownlint-capture -->
+<!-- markdownlint-disable MD014 -->
 ```shell:no-line-numbers
 $ asdf foo         # same as running `$ASDF_DATA_DIR/plugins/foo/lib/commands/command.bash`
 $ asdf foo bar     # same as running `$ASDF_DATA_DIR/plugins/foo/lib/commands/command.bash bar`
@@ -765,6 +773,7 @@ $ asdf foo help    # same as running `$ASDF_DATA_DIR/plugins/foo/lib/commands/co
 $ asdf foo bat man # same as running `$ASDF_DATA_DIR/plugins/foo/lib/commands/command-bat-man.bash`
 $ asdf foo bat baz # same as running `$ASDF_DATA_DIR/plugins/foo/lib/commands/command-bat.bash baz`
 ```
+<!-- markdownlint-restore -->
 
 Plugin authors can use this feature to provide utilities related to their tools,
 or even create plugins that are just new command extensions of asdf itself.
@@ -819,6 +828,7 @@ asdf plugin test <plugin_name> <plugin_url> [--asdf-tool-version <version>] [--a
 - Optional parameter `[test_command...]` is the command to execute to validate
   the installed tool works correctly. Typically `<tool> --version` or
   `<tool> --help`. For example, to test the NodeJS plugin, we could run
+
   ```shell:no-line-numbers
   # asdf plugin test <plugin_name>  <plugin_url>                               [test_command]
     asdf plugin test nodejs         https://github.com/asdf-vm/asdf-nodejs.git node --version

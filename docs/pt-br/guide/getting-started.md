@@ -420,7 +420,7 @@ asdf global nodejs latest
 
 `$HOME/.tool-versions` ficará assim:
 
-```
+```text
 nodejs 16.5.0
 ```
 
@@ -436,7 +436,7 @@ asdf local nodejs latest
 
 `$PWD/.tool-versions` ficará assim:
 
-```
+```text
 nodejs 16.5.0
 ```
 
@@ -446,7 +446,7 @@ nodejs 16.5.0
 
 O [`asdf-nodejs`](https://github.com/asdf-vm/asdf-nodejs/) suporta tanto arquivos `.nvmrc` quanto `.node-version`. Para ativar essa funcionalidade, adicione a seguinte linha ao seu arquivo de configuração do `asdf` - `$HOME/.asdfrc`:
 
-```
+```text
 legacy_version_file = yes
 ```
 

@@ -28,7 +28,7 @@ asdf install
 ```
 
 - [Node.js](https://nodejs.org): tempo de execução JavaScript criado no mecanismo JavaScript V8 do Chrome.
-- 
+
 Instale as dependências do Node.js do `docs/package.json`:
 
 ```shell:no-line-numbers
