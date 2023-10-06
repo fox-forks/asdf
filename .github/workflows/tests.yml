@@ -52,6 +52,57 @@ jobs:
         env:
           GITHUB_API_TOKEN: ${{ github.token }}
 
+  freeebsd:
+    # needs: detect-changes
+    # only run if
+    # - changes to cli
+    # if: ${{ needs.detect-changes.outputs.cli == 'true' }}
+    runs-on: macos-12
+    steps:
+      - uses: actions/checkout@v4
+      - name: Test in FreeBSD
+        uses: vmactions/freebsd-vm@v0
+        with:
+          usesh: true
+          prepare: |
+            pkg install -y devel/bats-core devel/git net/curl
+          run: |
+            bats ./test
+
+  openbsd:
+    # needs: detect-changes
+    # only run if
+    # - changes to cli
+    # if: ${{ needs.detect-changes.outputs.cli == 'true' }}
+    runs-on: macos-12
+    steps:
+      - uses: actions/checkout@v4
+      - name: Test in OpenBSD
+        uses: vmactions/openbsd-vm@v0
+        with:
+          usesh: true
+          prepare: |
+            pkg_add install -y bats-core devel/git www/curl
+          run: |
+            bats ./test
+
+  netbsd:
+    # needs: detect-changes
+    # only run if
+    # - changes to cli
+    # if: ${{ needs.detect-changes.outputs.cli == 'true' }}
+    runs-on: macos-12
+    steps:
+      - uses: actions/checkout@v4
+      - name: Test in NetBSD
+        uses: vmactions/netbsd-vm@v0
+        with:
+          usesh: true
+          prepare: |
+            pkg install -y bats devel/git net/curl
+          run: |
+            bats ./test
+
   macos:
     needs: detect-changes
     # only run if
@@ -66,6 +117,23 @@ jobs:
       - run: scripts/test.bash
         env:
           GITHUB_API_TOKEN: ${{ github.token }}
+
+  solaris:
+    # needs: detect-changes
+    # only run if
+    # - changes to cli
+    # if: ${{ needs.detect-changes.outputs.cli == 'true' }}
+    runs-on: macos-12
+    steps:
+      - uses: actions/checkout@v4
+      - name: Test in Solaris
+        uses: vmactions/solaris-vm@v0
+        with:
+          usesh: true
+          prepare: |
+            pkg install -y devel/bats-core devel/git net/curl
+          run: |
+            bats ./test
 
   documentation-site:
     needs: detect-changes
