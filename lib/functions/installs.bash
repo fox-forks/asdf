@@ -73,8 +73,8 @@ install_one_local_tool() {
 }
 
 install_local_tool_versions() {
-  local plugins_path
-  plugins_path=$(get_plugin_path)
+  get_plugin_path
+  local plugins_path=$REPLY
 
   local search_path
   search_path=$PWD
@@ -87,12 +87,17 @@ install_local_tool_versions() {
 
   # Locate all the plugins installed in the system
   local plugins_installed
-  if find "$plugins_path" -mindepth 1 -type d &>/dev/null; then
-    for plugin_path in "$plugins_path"/*/; do
-      local plugin_name
-      plugin_name=$(basename "$plugin_path")
-      plugins_installed="$plugins_installed $plugin_name"
-    done
+  for plugin_path in "$plugins_path"/*/; do
+    if [ ! -d "$plugin_path" ]; then
+      break
+    fi
+
+    local plugin_name
+    plugin_name=${plugin_path%/}
+    plugin_name=${plugin_name##*/}
+    plugins_installed="$plugins_installed $plugin_name"
+  done
+  if [ -n "$plugins_installed" ]; then
     plugins_installed=$(printf "%s" "$plugins_installed" | tr " " "\n")
   fi
 
@@ -146,9 +151,9 @@ install_tool_version() {
   local full_version=$2
   local flags=$3
   local keep_download
-  local plugin_path
 
-  plugin_path=$(get_plugin_path "$plugin_name")
+  get_plugin_path "$plugin_name"
+  local plugin_path=$REPLY
   check_if_plugin_exists "$plugin_name"
 
   for flag in $flags; do

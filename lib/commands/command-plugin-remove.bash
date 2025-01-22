@@ -4,8 +4,8 @@ plugin_remove_command() {
   local plugin_name=$1
   check_if_plugin_exists "$plugin_name"
 
-  local plugin_path
-  plugin_path=$(get_plugin_path "$plugin_name")
+  get_plugin_path "$plugin_name"
+  local plugin_path=$REPLY
 
   asdf_run_hook "pre_asdf_plugin_remove" "$plugin_name"
   asdf_run_hook "pre_asdf_plugin_remove_${plugin_name}"
@@ -18,10 +18,10 @@ plugin_remove_command() {
   fi
 
   rm -rf "$plugin_path"
-  rm -rf "$(asdf_data_dir)/installs/${plugin_name}"
-  rm -rf "$(asdf_data_dir)/downloads/${plugin_name}"
+  rm -rf "$ASDF_DATA_DIR/installs/${plugin_name}"
+  rm -rf "$ASDF_DATA_DIR/downloads/${plugin_name}"
 
-  for f in "$(asdf_data_dir)"/shims/*; do
+  for f in "$ASDF_DATA_DIR"/shims/*; do
     if [ -f "$f" ]; then # nullglob may not be set
       if grep -q "asdf-plugin: ${plugin_name}" "$f"; then
         rm -f "$f"

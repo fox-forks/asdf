@@ -14,10 +14,8 @@ version_command() {
   shift 2
   local versions=("$@")
 
-  local file_name
+  local file_name=$ASDF_DEFAULT_TOOL_VERSIONS_FILENAME
   local file
-
-  file_name="$(asdf_tool_versions_filename)"
 
   if [ "$cmd" = "global" ]; then
     file="$HOME/$file_name"
@@ -82,11 +80,11 @@ version_command() {
 list_all_command() {
   local plugin_name=$1
   local query=$2
-  local plugin_path
   local std_out_file
   local std_err_file
   local output
-  plugin_path=$(get_plugin_path "$plugin_name")
+  get_plugin_path "$plugin_name"
+  local plugin_path=$REPLY
   check_if_plugin_exists "$plugin_name"
 
   local temp_dir
@@ -134,7 +132,6 @@ latest_command() {
 
   local plugin_name=$1
   local query=$2
-  local plugin_path
 
   if [ "$plugin_name" = "--all" ]; then
     latest_all
@@ -142,7 +139,8 @@ latest_command() {
 
   [[ -z $query ]] && query="$DEFAULT_QUERY"
 
-  plugin_path=$(get_plugin_path "$plugin_name")
+  get_plugin_path "$plugin_name"
+  local plugin_path=$REPLY
   check_if_plugin_exists "$plugin_name"
 
   local versions
@@ -169,47 +167,50 @@ latest_command() {
 }
 
 latest_all() {
-  local plugins_path
-  plugins_path=$(get_plugin_path)
+  get_plugin_path
+  local plugins_path=$REPLY
 
-  if find "$plugins_path" -mindepth 1 -type d &>/dev/null; then
-    for plugin_path in "$plugins_path"/*/; do
-      plugin_name=$(basename "$plugin_path")
+  for plugin_path in "$plugins_path"/*/; do
+    if [ ! -d "$plugin_path" ]; then
+      printf "%s\n" 'No plugins installed'
+      break
+    fi
 
-      # Retrieve the version of the plugin
-      local version
-      if [ -f "${plugin_path}/bin/latest-stable" ]; then
-        # We can't filter by a concrete query because different plugins might
-        # have different queries.
-        version=$("${plugin_path}"/bin/latest-stable "")
-        if [ -z "${version}" ]; then
-          version="unknown"
-        fi
-      else
-        # pattern from xxenv-latest (https://github.com/momo-lab/xxenv-latest)
-        version=$(list_all_command "$plugin_name" |
-          grep -ivE "(^Available version:|-src|-dev|-latest|-stm|[-\\.]rc|-alpha|-beta|[-\\.]pre|-next|(a|b|c)[0-9]+|snapshot|master)" |
-          sed 's/^[[:space:]]\+//' |
-          tail -1)
-        if [ -z "${version}" ]; then
-          version="unknown"
-        fi
+    plugin_name=${plugin_path%/}
+    plugin_name=${plugin_name##*/}
+
+    # Retrieve the version of the plugin
+    local version
+    if [ -f "${plugin_path}/bin/latest-stable" ]; then
+      # We can't filter by a concrete query because different plugins might
+      # have different queries.
+      version=$("${plugin_path}"/bin/latest-stable "")
+      if [ -z "${version}" ]; then
+        version="unknown"
       fi
-
-      local installed_status
-      installed_status="missing"
-
-      local installed_versions
-      installed_versions=$(list_installed_versions "$plugin_name")
-
-      if [ -n "$installed_versions" ] && printf '%s\n' "$installed_versions" | grep -q "^$version\$"; then
-        installed_status="installed"
+    else
+      # pattern from xxenv-latest (https://github.com/momo-lab/xxenv-latest)
+      version=$(list_all_command "$plugin_name" |
+        grep -ivE "(^Available version:|-src|-dev|-latest|-stm|[-\\.]rc|-alpha|-beta|[-\\.]pre|-next|(a|b|c)[0-9]+|snapshot|master)" |
+        sed 's/^[[:space:]]\+//' |
+        tail -1)
+      if [ -z "${version}" ]; then
+        version="unknown"
       fi
-      printf "%s\t%s\t%s\n" "$plugin_name" "$version" "$installed_status"
-    done
-  else
-    printf "%s\n" 'No plugins installed'
-  fi
+    fi
+
+    local installed_status
+    installed_status="missing"
+
+    local installed_versions
+    installed_versions=$(list_installed_versions "$plugin_name")
+
+    if [ -n "$installed_versions" ] && printf '%s\n' "$installed_versions" | grep -q "^$version\$"; then
+      installed_status="installed"
+    fi
+    printf "%s\t%s\t%s\n" "$plugin_name" "$version" "$installed_status"
+  done
+
   exit 0
 }
 

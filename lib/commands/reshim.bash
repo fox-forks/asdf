@@ -3,10 +3,11 @@ remove_shim_for_version() {
   local version=$2
   local shim_name
 
-  shim_name=$(basename "$3")
+  shim_name=${3%/}
+  shim_name=${shim_name##*/}
 
   local shim_path
-  shim_path="$(asdf_data_dir)/shims/$shim_name"
+  shim_path="$ASDF_DATA_DIR/shims/$shim_name"
 
   local count_installed
   count_installed=$(list_installed_versions "$plugin_name" | wc -l)
@@ -29,15 +30,18 @@ reshim_command() {
   local full_version=$2
 
   if [ -z "$plugin_name" ]; then
-    local plugins_path
-    plugins_path=$(get_plugin_path)
+    get_plugin_path
+    local plugins_path=$REPLY
 
-    if find "$plugins_path" -mindepth 1 -type d &>/dev/null; then
-      for plugin_path in "$plugins_path"/*/; do
-        plugin_name=$(basename "$plugin_path")
-        reshim_command "$plugin_name"
-      done
-    fi
+    for plugin_path in "$plugins_path"/*/; do
+      if [ ! -d "$plugin_path" ]; then
+        break
+      fi
+
+      plugin_name=${plugin_path%/}
+      plugin_name=${plugin_name##*/}
+      reshim_command "$plugin_name"
+    done
     return 0
   fi
 
@@ -52,7 +56,7 @@ reshim_command() {
   else
     # generate for all versions of the package
     local plugin_installs_path
-    plugin_installs_path="$(asdf_data_dir)/installs/${plugin_name}"
+    plugin_installs_path="$ASDF_DATA_DIR/installs/${plugin_name}"
 
     for install in "${plugin_installs_path}"/*/; do
       local full_version_name
@@ -68,8 +72,8 @@ reshim_command() {
 
 ensure_shims_dir() {
   # Create shims dir if doesn't exist
-  if [ ! -d "$(asdf_data_dir)/shims" ]; then
-    mkdir "$(asdf_data_dir)/shims"
+  if [ ! -d "$ASDF_DATA_DIR/shims" ]; then
+    mkdir "$ASDF_DATA_DIR/shims"
   fi
 }
 
@@ -83,10 +87,11 @@ write_shim_script() {
   fi
 
   local executable_name
-  executable_name=$(basename "$executable_path")
+  executable_name=${executable_path%/}
+  executable_name=${executable_name##*/}
 
   local shim_path
-  shim_path="$(asdf_data_dir)/shims/$executable_name"
+  shim_path="$ASDF_DATA_DIR/shims/$executable_name"
 
   local temp_dir
   temp_dir=${TMPDIR:-/tmp}
@@ -104,7 +109,7 @@ EOF
   cat <<EOF >"$shim_path"
 #!/usr/bin/env bash
 $(sort -u <"$temp_versions_path")
-exec $(asdf_dir)/bin/asdf exec "${executable_name}" "\$@" # asdf_allow: ' asdf '
+exec $ASDF_DIR/bin/asdf exec "${executable_name}" "\$@" # asdf_allow: ' asdf '
 EOF
 
   rm "$temp_versions_path"

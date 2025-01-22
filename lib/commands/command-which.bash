@@ -2,7 +2,8 @@
 
 which_command() {
   local shim_name
-  shim_name=$(basename "$1")
+  shim_name=${1%/}
+  shim_name=${shim_name##*/}
 
   if [ -z "$shim_name" ]; then
     printf "usage: asdf which <command>\n"

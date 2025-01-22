@@ -12,3 +12,11 @@ indent_size = 4
 
 [*.fish]
 indent_size = 4
+
+[perf/**]
+indent_style = tab
+indent_size = 3
+
+[*.{cfg,data}]
+indent_style = tab
+indent_size = 3

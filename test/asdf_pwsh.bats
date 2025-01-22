@@ -4,7 +4,7 @@
 load test_helpers
 
 setup() {
-  cd "$(dirname "$BATS_TEST_DIRNAME")"
+  cd "$BATS_TEST_DIRNAME/.."
 
   if ! command -v pwsh &>/dev/null && [ -z "$GITHUB_ACTIONS" ]; then
     skip "Powershell Core is not installed"

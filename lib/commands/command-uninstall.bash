@@ -1,13 +1,13 @@
 # -*- sh -*-
 
 # shellcheck source=lib/commands/reshim.bash
-. "$(dirname "$ASDF_CMD_FILE")/reshim.bash"
+. "${ASDF_CMD_FILE%/*}/reshim.bash"
 
 uninstall_command() {
   local plugin_name=$1
   local full_version=$2
-  local plugin_path
-  plugin_path=$(get_plugin_path "$plugin_name")
+  get_plugin_path "$plugin_name"
+  local plugin_path=$REPLY
 
   check_if_plugin_exists "$plugin_name"
 

@@ -6,8 +6,8 @@ load test_helpers
 setup() {
   setup_asdf_dir
   install_dummy_plugin
-  local plugin_path
-  plugin_path="$(get_plugin_path dummy)"
+  get_plugin_path dummy
+  local plugin_path=$REPLY
   mkdir -p "$plugin_path/lib/commands"
 }
 
@@ -16,14 +16,15 @@ teardown() {
 }
 
 @test "asdf help shows plugin extension commands" {
-  local plugin_path listed_cmds
-  plugin_path="$(get_plugin_path dummy)"
+  get_plugin_path dummy
+  local plugin_path=$REPLY
   touch "$plugin_path/lib/commands/command.bash"
   touch "$plugin_path/lib/commands/command-foo.bash"
   touch "$plugin_path/lib/commands/command-foo-bar.bash"
   run asdf help
   [ "$status" -eq 0 ]
   echo "$output" | grep "PLUGIN dummy" # should present plugin section
+  local listed_cmds
   listed_cmds=$(echo "$output" | grep -c "asdf dummy")
   [ "$listed_cmds" -eq 3 ]
   echo "$output" | grep "asdf dummy foo bar" # should present commands without hyphens
@@ -35,7 +36,8 @@ teardown() {
   plugin_name=dummy-hyphenated
   install_mock_plugin $plugin_name
 
-  plugin_path="$(get_plugin_path $plugin_name)"
+  get_plugin_path $plugin_name
+  local plugin_path=$REPLY
   mkdir -p "$plugin_path/lib/commands"
   touch "$plugin_path/lib/commands/command.bash"
   touch "$plugin_path/lib/commands/command-foo.bash"
@@ -51,7 +53,8 @@ teardown() {
 }
 
 @test "asdf can execute plugin bin commands" {
-  plugin_path="$(get_plugin_path dummy)"
+  get_plugin_path dummy
+  local plugin_path=$REPLY
 
   # this plugin defines a new `asdf dummy foo` command
   cat <<'EOF' >"$plugin_path/lib/commands/command-foo.bash"
@@ -68,10 +71,11 @@ EOF
 }
 
 @test "asdf can source plugin bin scripts" {
-  plugin_path="$(get_plugin_path dummy)"
+  get_plugin_path dummy
+  local plugin_path=$REPLY
 
   # this plugin defines a new `asdf dummy foo` command
-  echo 'echo sourced script has asdf utils $(get_plugin_path dummy) $*' >"$plugin_path/lib/commands/command-foo.bash"
+  echo -e 'get_plugin_path dummy; echo sourced script has asdf utils $REPLY $*' >"$plugin_path/lib/commands/command-foo.bash"
 
   expected="sourced script has asdf utils $plugin_path bar"
 
@@ -81,7 +85,8 @@ EOF
 }
 
 @test "asdf can execute plugin default command without arguments" {
-  plugin_path="$(get_plugin_path dummy)"
+  get_plugin_path dummy
+  local plugin_path=$REPLY
 
   # this plugin defines a new `asdf dummy` command
   cat <<'EOF' >"$plugin_path/lib/commands/command.bash"
@@ -98,7 +103,8 @@ EOF
 }
 
 @test "asdf can execute plugin default command with arguments" {
-  plugin_path="$(get_plugin_path dummy)"
+  get_plugin_path dummy
+  local plugin_path=$REPLY
 
   # this plugin defines a new `asdf dummy` command
   cat <<'EOF' >"$plugin_path/lib/commands/command.bash"

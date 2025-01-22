@@ -4,7 +4,7 @@ load test_helpers
 
 # Helper function to handle sourcing of asdf.sh
 source_asdf_sh() {
-  . "$(dirname "$BATS_TEST_DIRNAME")/asdf.sh"
+  . "$BATS_TEST_DIRNAME/../asdf.sh"
 }
 
 cleaned_path() {

@@ -1,6 +1,6 @@
 # -*- sh -*-
 # shellcheck source=lib/functions/plugins.bash
-. "$(dirname "$(dirname "$0")")/lib/functions/plugins.bash"
+. "${0%/*/*}/lib/functions/plugins.bash"
 
 # shellcheck disable=SC2059
 plugin_current_command() {
@@ -67,8 +67,8 @@ current_command() {
 check_for_deprecated_plugin() {
   local plugin_name=$1
 
-  local plugin_path
-  plugin_path=$(get_plugin_path "$plugin_name")
+  get_plugin_path "$plugin_name"
+  local plugin_path=$REPLY
   local legacy_config
   legacy_config=$(get_asdf_config_value "legacy_version_file")
   local deprecated_script="${plugin_path}/bin/get-version-from-legacy-file"

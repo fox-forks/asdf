@@ -1,0 +1,285 @@
+diff --git a/bin/asdf b/bin/asdf
+index a0962d8..9649b87 100755
+--- a/bin/asdf
++++ b/bin/asdf
+@@ -29,7 +29,7 @@ find_cmd() {
+ 
+ find_asdf_cmd() {
+   local asdf_cmd_dir
+-  asdf_cmd_dir="$(asdf_dir)/lib/commands"
++  asdf_cmd_dir="$ASDF_DIR/lib/commands"
+   case "$1" in
+   'exec' | 'current' | 'env' | 'global' | 'install' | 'latest' | 'local' | \
+     'reshim' | 'uninstall' | 'update' | 'where' | 'which' | \
+@@ -81,8 +81,8 @@ asdf_cmd() {
+   ASDF_DATA_DIR=$(asdf_data_dir)
+   export ASDF_DATA_DIR
+ 
+-  ASDF_DIR=$(asdf_dir)
+-  export ASDF_DIR
++  get_asdf_dir
++  export ASDF_DIR=$REPLY
+ 
+   local result=
+   result="$(find_asdf_cmd "$@")"
+@@ -113,8 +113,7 @@ asdf_cmd() {
+     # shellcheck source=/dev/null
+     . "$ASDF_CMD_FILE"
+   else
+-    local asdf_cmd_dir
+-    asdf_cmd_dir="$(asdf_dir)/lib/commands"
++    local asdf_cmd_dir="$ASDF_DIR/lib/commands"
+     printf "%s\n" "Unknown command: \`asdf ${*}\`" >&2
+     # shellcheck source=lib/commands/command-help.bash
+     . "$asdf_cmd_dir/command-help.bash" >&2
+diff --git a/lib/commands/command-help.bash b/lib/commands/command-help.bash
+index 5453185..e5185b9 100644
+--- a/lib/commands/command-help.bash
++++ b/lib/commands/command-help.bash
+@@ -4,7 +4,7 @@
+ 
+ asdf_help() {
+   printf "version: %s\n\n" "$(asdf_version)"
+-  cat "$(asdf_dir)/help.txt"
++  cat "$ASDF_DIR/help.txt"
+ }
+ 
+ asdf_moto() {
+diff --git a/lib/commands/command-plugin-list-all.bash b/lib/commands/command-plugin-list-all.bash
+index 29425d9..31a1d76 100644
+--- a/lib/commands/command-plugin-list-all.bash
++++ b/lib/commands/command-plugin-list-all.bash
+@@ -4,7 +4,7 @@ plugin_list_all_command() {
+   initialize_or_update_plugin_repository
+ 
+   local plugins_index_path
+-  plugins_index_path="$(asdf_data_dir)/repository/plugins"
++  plugins_index_path="$ASDF_DATA_DIR/repository/plugins"
+ 
+   local plugins_local_path
+   plugins_local_path="$(get_plugin_path)"
+diff --git a/lib/commands/command-plugin-push.bash b/lib/commands/command-plugin-push.bash
+index 6136a10..8a8726b 100644
+--- a/lib/commands/command-plugin-push.bash
++++ b/lib/commands/command-plugin-push.bash
+@@ -3,7 +3,7 @@
+ plugin_push_command() {
+   local plugin_name=$1
+   if [ "$plugin_name" = "--all" ]; then
+-    for dir in "$(asdf_data_dir)"/plugins/*/; do
++    for dir in "$ASDF_DATA_DIR"/plugins/*/; do
+       local dirname=${dir%/}
+       dirname=${dirname##*/}
+       printf "Pushing %s...\n" "$dirname"
+diff --git a/lib/commands/command-plugin-remove.bash b/lib/commands/command-plugin-remove.bash
+index 7b959bd..4020cca 100644
+--- a/lib/commands/command-plugin-remove.bash
++++ b/lib/commands/command-plugin-remove.bash
+@@ -18,10 +18,10 @@ plugin_remove_command() {
+   fi
+ 
+   rm -rf "$plugin_path"
+-  rm -rf "$(asdf_data_dir)/installs/${plugin_name}"
+-  rm -rf "$(asdf_data_dir)/downloads/${plugin_name}"
++  rm -rf "$ASDF_DATA_DIR/installs/${plugin_name}"
++  rm -rf "$ASDF_DATA_DIR/downloads/${plugin_name}"
+ 
+-  for f in "$(asdf_data_dir)"/shims/*; do
++  for f in "$ASDF_DATA_DIR"/shims/*; do
+     if [ -f "$f" ]; then # nullglob may not be set
+       if grep -q "asdf-plugin: ${plugin_name}" "$f"; then
+         rm -f "$f"
+diff --git a/lib/commands/command-plugin-test.bash b/lib/commands/command-plugin-test.bash
+index 791ff5f..6572a14 100644
+--- a/lib/commands/command-plugin-test.bash
++++ b/lib/commands/command-plugin-test.bash
+@@ -68,9 +68,9 @@ plugin_test_command() {
+   fi
+ 
+   TEST_DIR=$(mktemp -dt asdf.XXXX)
+-  cp -R "$(asdf_dir)/bin" "$TEST_DIR"
+-  cp -R "$(asdf_dir)/lib" "$TEST_DIR"
+-  cp "$(asdf_dir)/asdf.sh" "$TEST_DIR"
++  cp -R "$ASDF_DIR/bin" "$TEST_DIR"
++  cp -R "$ASDF_DIR/lib" "$TEST_DIR"
++  cp "$ASDF_DIR/asdf.sh" "$TEST_DIR"
+ 
+   plugin_test() {
+     export ASDF_DIR=$TEST_DIR
+diff --git a/lib/commands/command-update.bash b/lib/commands/command-update.bash
+index f991264..3b37743 100644
+--- a/lib/commands/command-update.bash
++++ b/lib/commands/command-update.bash
+@@ -4,7 +4,7 @@ update_command() {
+   local update_to_head=$1
+ 
+   (
+-    cd "$(asdf_dir)" || exit 1
++    cd "$ASDF_DIR" || exit 1
+ 
+     if [ -f asdf_updates_disabled ] || ! git rev-parse --is-inside-work-tree &>/dev/null; then
+       printf "Update command disabled. Please use the package manager that you used to install asdf to upgrade asdf.\n"
+diff --git a/lib/commands/reshim.bash b/lib/commands/reshim.bash
+index 82e6614..040edb7 100644
+--- a/lib/commands/reshim.bash
++++ b/lib/commands/reshim.bash
+@@ -7,7 +7,7 @@ remove_shim_for_version() {
+   shim_name=${shim_name##*/}
+ 
+   local shim_path
+-  shim_path="$(asdf_data_dir)/shims/$shim_name"
++  shim_path="$ASDF_DATA_DIR/shims/$shim_name"
+ 
+   local count_installed
+   count_installed=$(list_installed_versions "$plugin_name" | wc -l)
+@@ -54,7 +54,7 @@ reshim_command() {
+   else
+     # generate for all versions of the package
+     local plugin_installs_path
+-    plugin_installs_path="$(asdf_data_dir)/installs/${plugin_name}"
++    plugin_installs_path="$ASDF_DATA_DIR/installs/${plugin_name}"
+ 
+     for install in "${plugin_installs_path}"/*/; do
+       local full_version_name
+@@ -70,8 +70,8 @@ reshim_command() {
+ 
+ ensure_shims_dir() {
+   # Create shims dir if doesn't exist
+-  if [ ! -d "$(asdf_data_dir)/shims" ]; then
+-    mkdir "$(asdf_data_dir)/shims"
++  if [ ! -d "$ASDF_DATA_DIR/shims" ]; then
++    mkdir "$ASDF_DATA_DIR/shims"
+   fi
+ }
+ 
+@@ -89,7 +89,7 @@ write_shim_script() {
+   executable_name=${executable_name##*/}
+ 
+   local shim_path
+-  shim_path="$(asdf_data_dir)/shims/$executable_name"
++  shim_path="$ASDF_DATA_DIR/shims/$executable_name"
+ 
+   local temp_dir
+   temp_dir=${TMPDIR:-/tmp}
+@@ -107,7 +107,7 @@ EOF
+   cat <<EOF >"$shim_path"
+ #!/usr/bin/env bash
+ $(sort -u <"$temp_versions_path")
+-exec $(asdf_dir)/bin/asdf exec "${executable_name}" "\$@" # asdf_allow: ' asdf '
++exec $ASDF_DIR/bin/asdf exec "${executable_name}" "\$@" # asdf_allow: ' asdf '
+ EOF
+ 
+   rm "$temp_versions_path"
+diff --git a/lib/functions/plugins.bash b/lib/functions/plugins.bash
+index ab6bd54..733f522 100644
+--- a/lib/functions/plugins.bash
++++ b/lib/functions/plugins.bash
+@@ -77,7 +77,7 @@ plugin_add_command() {
+   local plugin_path
+   plugin_path=$(get_plugin_path "$plugin_name")
+ 
+-  [ -d "$(asdf_data_dir)/plugins" ] || mkdir -p "$(asdf_data_dir)/plugins"
++  [ -d "$ASDF_DATA_DIR/plugins" ] || mkdir -p "$ASDF_DATA_DIR/plugins"
+ 
+   if [ -d "$plugin_path" ]; then
+     printf '%s\n' "Plugin named $plugin_name already added"
+@@ -115,8 +115,8 @@ plugin_update_command() {
+   local plugins=
+ 
+   if [ "$plugin_name" = "--all" ]; then
+-    if [ -d "$(asdf_data_dir)"/plugins ]; then
+-      plugins=$(find "$(asdf_data_dir)"/plugins -mindepth 1 -maxdepth 1 -type d)
++    if [ -d "$ASDF_DATA_DIR"/plugins ]; then
++      plugins=$(find "$ASDF_DATA_DIR"/plugins -mindepth 1 -maxdepth 1 -type d)
+       while IFS= read -r dir; do
+         local dirname=${dir%/}
+         dirname=${dirname##*/}
+diff --git a/lib/utils.bash b/lib/utils.bash
+index 5979974..7c11ddf 100644
+--- a/lib/utils.bash
++++ b/lib/utils.bash
+@@ -7,9 +7,9 @@ GREP_COLORS=
+ 
+ asdf_version() {
+   local version git_rev
+-  version="v$(cat "$(asdf_dir)/version.txt")"
+-  if [ -d "$(asdf_dir)/.git" ]; then
+-    git_rev="$(git --git-dir "$(asdf_dir)/.git" rev-parse --short HEAD)"
++  version="v$(<"$ASDF_DIR/version.txt")"
++  if [ -d "$ASDF_DIR/.git" ]; then
++    git_rev="$(git --git-dir "$ASDF_DIR/.git" rev-parse --short HEAD)"
+     printf "%s-%s\n" "$version" "$git_rev"
+   else
+     printf "%s\n" "$version"
+@@ -32,21 +32,24 @@ asdf_data_dir() {
+   elif [ -n "$HOME" ]; then
+     data_dir="$HOME/.asdf"
+   else
+-    data_dir=$(asdf_dir)
++    get_asdf_dir
++    data_dir=$REPLY
+   fi
+ 
+   printf "%s\n" "$data_dir"
+ }
+ 
+-asdf_dir() {
++get_asdf_dir() {
++  unset -v REPLY
++
+   if [ -z "$ASDF_DIR" ]; then
+     local current_script_path=${BASH_SOURCE[0]}
+-    printf '%s\n' "$(
++    REPLY=$(
+       cd -- "$(dirname "$(dirname "$current_script_path")")" || exit
+       printf '%s\n' "$PWD"
+-    )"
++    )
+   else
+-    printf '%s\n' "$ASDF_DIR"
++    REPLY="$ASDF_DIR"
+   fi
+ }
+ 
+@@ -391,7 +394,7 @@ get_asdf_config_value() {
+   local key=$1
+   local config_path=
+   config_path=$(asdf_config_file)
+-  local default_config_path=${ASDF_CONFIG_DEFAULT_FILE:-"$(asdf_dir)/defaults"}
++  local default_config_path=${ASDF_CONFIG_DEFAULT_FILE:-"$ASDF_DIR/defaults"}
+ 
+   local local_config_path
+   local_config_path="$(find_file_upwards ".asdfrc")"
+@@ -701,7 +704,7 @@ get_shim_versions() {
+ 
+ preset_versions() {
+   shim_name=$1
+-  shim_plugin_versions "${shim_name}" | cut -d' ' -f 1 | uniq | xargs -IPLUGIN bash -c ". $(asdf_dir)/lib/utils.bash; printf \"%s %s\n\" PLUGIN \$(get_preset_version_for PLUGIN)"
++  shim_plugin_versions "${shim_name}" | cut -d' ' -f 1 | uniq | xargs -IPLUGIN bash -c ". $ASDF_DIR/lib/utils.bash; printf \"%s %s\n\" PLUGIN \$(get_preset_version_for PLUGIN)"
+ }
+ 
+ select_from_preset_version() {
+diff --git a/test/shim_exec.bats b/test/shim_exec.bats
+index 5c6d067..a46509c 100644
+--- a/test/shim_exec.bats
++++ b/test/shim_exec.bats
+@@ -38,7 +38,7 @@ teardown() {
+   echo "dummy 1.0" >"$PROJECT_DIR/.tool-versions"
+   run asdf install
+ 
+-  path=$(echo "$PATH" | sed -e "s|$(asdf_data_dir)/shims||g; s|::|:|g")
++  path=$(echo "$PATH" | sed -e "s|$ASDF_DATA_DIR/shims||g; s|::|:|g")
+   run env PATH="$path" which dummy
+   [ "$output" = "" ]
+   [ "$status" -eq 1 ]
+diff --git a/test/test_helpers.bash b/test/test_helpers.bash
+index 8a23931..3257ec7 100644
+--- a/test/test_helpers.bash
++++ b/test/test_helpers.bash
+@@ -109,5 +109,5 @@ clean_asdf_dir() {
+ 
+ setup_repo() {
+   cp -r "$BATS_TEST_DIRNAME/fixtures/dummy_plugins_repo" "$ASDF_DIR/repository"
+-  touch "$(asdf_dir)/tmp/repo-updated"
++  touch "$ASDF_DIR/tmp/repo-updated"
+ }

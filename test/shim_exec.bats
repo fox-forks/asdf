@@ -38,7 +38,7 @@ teardown() {
   echo "dummy 1.0" >"$PROJECT_DIR/.tool-versions"
   run asdf install
 
-  path=$(echo "$PATH" | sed -e "s|$(asdf_data_dir)/shims||g; s|::|:|g")
+  path=$(echo "$PATH" | sed -e "s|$ASDF_DATA_DIR/shims||g; s|::|:|g")
   run env PATH="$path" which dummy
   [ "$output" = "" ]
   [ "$status" -eq 1 ]

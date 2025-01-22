@@ -6,7 +6,7 @@ setup() {
   BASE_DIR=$(mktemp -dt asdf.XXXX)
   HOME="$BASE_DIR/home"
   ASDF_DIR="$HOME/.asdf"
-  git clone -o local "$(dirname "$BATS_TEST_DIRNAME")" "$ASDF_DIR"
+  git clone -o local "$BATS_TEST_DIRNAME/.." "$ASDF_DIR"
   git --git-dir "$ASDF_DIR/.git" remote add origin https://github.com/asdf-vm/asdf.git
   mkdir -p "$ASDF_DIR/plugins"
   mkdir -p "$ASDF_DIR/installs"

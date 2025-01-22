@@ -1,12 +1,12 @@
 # -*- sh -*-
 # shellcheck source=lib/functions/versions.bash
-. "$(dirname "$(dirname "$0")")/lib/functions/versions.bash"
+. "${0%/*/*}/lib/functions/versions.bash"
 # shellcheck source=lib/functions/plugins.bash
-. "$(dirname "$(dirname "$0")")/lib/functions/plugins.bash"
+. "${0%/*/*}/lib/functions/plugins.bash"
 # shellcheck source=lib/commands/reshim.bash
-. "$(dirname "$ASDF_CMD_FILE")/reshim.bash"
+. "${ASDF_CMD_FILE%/*}/reshim.bash"
 # shellcheck source=lib/functions/installs.bash
-. "$(dirname "$(dirname "$0")")/lib/functions/installs.bash"
+. "${0%/*/*}/lib/functions/installs.bash"
 
 plugin_test_command() {
 
@@ -68,9 +68,9 @@ plugin_test_command() {
   fi
 
   TEST_DIR=$(mktemp -dt asdf.XXXX)
-  cp -R "$(asdf_dir)/bin" "$TEST_DIR"
-  cp -R "$(asdf_dir)/lib" "$TEST_DIR"
-  cp "$(asdf_dir)/asdf.sh" "$TEST_DIR"
+  cp -R "$ASDF_DIR/bin" "$TEST_DIR"
+  cp -R "$ASDF_DIR/lib" "$TEST_DIR"
+  cp "$ASDF_DIR/asdf.sh" "$TEST_DIR"
 
   plugin_test() {
     export ASDF_DIR=$TEST_DIR
@@ -84,16 +84,16 @@ plugin_test_command() {
     fi
 
     # shellcheck disable=SC2119
-    if ! (plugin_list_command | grep -q "^$plugin_name$"); then
+    if ! plugin_list_command | grep -q "^$plugin_name$"; then
       fail_test "$plugin_name was not properly installed"
     fi
 
-    if ! (plugin_update_command "$plugin_name" "$plugin_gitref"); then
+    if ! plugin_update_command "$plugin_name" "$plugin_gitref"; then
       fail_test "failed to checkout $plugin_name gitref: $plugin_gitref"
     fi
 
-    local plugin_path
-    plugin_path=$(get_plugin_path "$plugin_name")
+    get_plugin_path "$plugin_name"
+    local plugin_path=$REPLY
     local list_all="$plugin_path/bin/list-all"
     if grep -q api.github.com "$list_all"; then
       if ! grep -q Authorization "$list_all"; then

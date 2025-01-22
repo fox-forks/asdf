@@ -1,6 +1,6 @@
 plugin_list_command() {
-  local plugins_path
-  plugins_path=$(get_plugin_path)
+  get_plugin_path
+  local plugins_path=$REPLY
 
   local show_repo
   local show_ref
@@ -21,29 +21,31 @@ plugin_list_command() {
     esac
   done
 
-  if find "$plugins_path" -mindepth 1 -type d &>/dev/null; then
-    (
-      for plugin_path in "$plugins_path"/*/; do
-        plugin_name=$(basename "$plugin_path")
-        printf "%s" "$plugin_name"
 
-        if [ -n "$show_repo" ]; then
-          printf "\t%s" "$(get_plugin_remote_url "$plugin_name")"
-        fi
+  for plugin_path in "$plugins_path"/*/; do
+    if [ ! -d "$plugin_path" ]; then
+      display_error 'No plugins installed'
+      exit 0
+    fi
 
-        if [ -n "$show_ref" ]; then
-          printf "\t%s\t%s" \
-            "$(get_plugin_remote_branch "$plugin_name")" \
-            "$(get_plugin_remote_gitref "$plugin_name")"
-        fi
+    {
+      plugin_name=${plugin_path%/}
+      plugin_name=${plugin_name##*/}
+      printf "%s" "$plugin_name"
 
-        printf "\n"
-      done
-    ) | awk '{ if (NF > 1) { printf("%-28s", $1) ; $1="" }; print $0}'
-  else
-    display_error 'No plugins installed'
-    exit 0
-  fi
+      if [ -n "$show_repo" ]; then
+        printf "\t%s" "$(get_plugin_remote_url "$plugin_name")"
+      fi
+
+      if [ -n "$show_ref" ]; then
+        printf "\t%s\t%s" \
+          "$(get_plugin_remote_branch "$plugin_name")" \
+          "$(get_plugin_remote_gitref "$plugin_name")"
+      fi
+
+      printf "\n"
+    } | awk '{ if (NF > 1) { printf("%-28s", $1) ; $1="" }; print $0}'
+  done
 }
 
 plugin_add_command() {
@@ -73,10 +75,10 @@ plugin_add_command() {
     exit 1
   fi
 
-  local plugin_path
-  plugin_path=$(get_plugin_path "$plugin_name")
+  get_plugin_path "$plugin_name"
+  local plugin_path=$REPLY
 
-  [ -d "$(asdf_data_dir)/plugins" ] || mkdir -p "$(asdf_data_dir)/plugins"
+  [ -d "$ASDF_DATA_DIR/plugins" ] || mkdir -p "$ASDF_DATA_DIR/plugins"
 
   if [ -d "$plugin_path" ]; then
     printf '%s\n' "Plugin named $plugin_name already added"
@@ -114,16 +116,17 @@ plugin_update_command() {
   local plugins=
 
   if [ "$plugin_name" = "--all" ]; then
-    if [ -d "$(asdf_data_dir)"/plugins ]; then
-      plugins=$(find "$(asdf_data_dir)"/plugins -mindepth 1 -maxdepth 1 -type d)
-      while IFS= read -r dir; do
-        update_plugin "$(basename "$dir")" "$dir" "$gitref" &
-      done <<<"$plugins"
+    if [ -d "$ASDF_DATA_DIR"/plugins ]; then
+      for dir in "$ASDF_DATA_DIR"/plugins/*/; do
+        local dirname=${dir%/}
+        dirname=${dirname##*/}
+        update_plugin "$dirname" "$dir" "$gitref" &
+      done
       wait
     fi
   else
-    local plugin_path
-    plugin_path="$(get_plugin_path "$plugin_name")"
+    get_plugin_path "$plugin_name"
+    local plugin_path=$REPLY
     check_if_plugin_exists "$plugin_name"
     update_plugin "$plugin_name" "$plugin_path" "$gitref"
   fi

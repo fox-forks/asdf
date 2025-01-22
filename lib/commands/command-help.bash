@@ -1,10 +1,10 @@
 # -*- sh -*-
 # shellcheck source=lib/functions/versions.bash
-. "$(dirname "$(dirname "$0")")/lib/functions/versions.bash"
+. "${0%/*/*}/lib/functions/versions.bash"
 
 asdf_help() {
   printf "version: %s\n\n" "$(asdf_version)"
-  cat "$(asdf_dir)/help.txt"
+  cat "$ASDF_DIR/help.txt"
 }
 
 asdf_moto() {
@@ -16,16 +16,19 @@ EOF
 }
 
 asdf_extension_cmds() {
-  local plugins_path plugin_path ext_cmd_path ext_cmds plugin
-  plugins_path="$(get_plugin_path)"
+  local plugin_path ext_cmd_path ext_cmds plugin
+  get_plugin_path
+  local plugins_path=$REPLY
   for plugin_path in "$plugins_path"/*/; do
-    plugin="$(basename "$plugin_path")"
+    plugin=${plugin_path%/}
+    plugin=${plugin##*/}
     ext_cmd_path="$plugin_path/lib/commands"
-    ext_cmds="$(find "$ext_cmd_path" -name "command*.bash" 2>/dev/null)"
-    if [[ -n $ext_cmds ]]; then
+    ext_cmds=("$ext_cmd_path"/command*.bash)
+    if (( ${#ext_cmds} > 0 )); then
       printf "\nPLUGIN %s\n" "$plugin"
-      for ext_cmd in $ext_cmds; do
-        ext_cmd_name="$(basename "$ext_cmd")"
+      for ext_cmd in "${ext_cmds[@]}"; do
+        ext_cmd_name=${ext_cmd%/}
+        ext_cmd_name=${ext_cmd_name##*/}
         sed "s/-/ /g;s/.bash//;s/command-*/  asdf $plugin/;" <<<"$ext_cmd_name"
       done | sort
     fi
@@ -35,11 +38,11 @@ asdf_extension_cmds() {
 help_command() {
   local plugin_name="$1"
   local tool_version="$2"
-  local plugin_path
 
   # If plugin name is present as first argument output plugin help info
   if [ -n "$plugin_name" ]; then
-    plugin_path=$(get_plugin_path "$plugin_name")
+    get_plugin_path "$plugin_name"
+    local plugin_path=$REPLY
 
     if [ -d "$plugin_path" ]; then
       if [ -f "${plugin_path}/bin/help.overview" ]; then

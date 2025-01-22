@@ -7,46 +7,44 @@ GREP_COLORS=
 
 asdf_version() {
   local version git_rev
-  version="v$(cat "$(asdf_dir)/version.txt")"
-  if [ -d "$(asdf_dir)/.git" ]; then
-    git_rev="$(git --git-dir "$(asdf_dir)/.git" rev-parse --short HEAD)"
+  version="v$(<"$ASDF_DIR/version.txt")"
+  if [ -d "$ASDF_DIR/.git" ]; then
+    git_rev="$(git --git-dir "$ASDF_DIR/.git" rev-parse --short HEAD)"
     printf "%s-%s\n" "$version" "$git_rev"
   else
     printf "%s\n" "$version"
   fi
 }
 
-asdf_tool_versions_filename() {
-  printf '%s\n' "${ASDF_DEFAULT_TOOL_VERSIONS_FILENAME:-.tool-versions}"
+get_asdf_tool_versions_filename() {
+  REPLY="${ASDF_DEFAULT_TOOL_VERSIONS_FILENAME:-.tool-versions}"
 }
 
-asdf_config_file() {
-  printf '%s\n' "${ASDF_CONFIG_FILE:-$HOME/.asdfrc}"
+get_asdf_config_file() {
+  REPLY="${ASDF_CONFIG_FILE:-$HOME/.asdfrc}"
 }
 
-asdf_data_dir() {
-  local data_dir
-
+get_asdf_data_dir() {
   if [ -n "${ASDF_DATA_DIR}" ]; then
-    data_dir="${ASDF_DATA_DIR}"
+    REPLY="${ASDF_DATA_DIR}"
   elif [ -n "$HOME" ]; then
-    data_dir="$HOME/.asdf"
+    REPLY="$HOME/.asdf"
   else
-    data_dir=$(asdf_dir)
+    get_asdf_dir
+    # shellcheck disable=SC2269
+    REPLY=$REPLY
   fi
-
-  printf "%s\n" "$data_dir"
 }
 
-asdf_dir() {
+get_asdf_dir() {
   if [ -z "$ASDF_DIR" ]; then
     local current_script_path=${BASH_SOURCE[0]}
-    printf '%s\n' "$(
+    REPLY=$(
       cd -- "$(dirname "$(dirname "$current_script_path")")" || exit
       printf '%s\n' "$PWD"
-    )"
+    )
   else
-    printf '%s\n' "$ASDF_DIR"
+    REPLY="$ASDF_DIR"
   fi
 }
 
@@ -60,7 +58,7 @@ get_install_path() {
   local version=$3
 
   local install_dir
-  install_dir="$(asdf_data_dir)/installs"
+  install_dir="$ASDF_DATA_DIR/installs"
 
   [ -d "${install_dir}/${plugin}" ] || mkdir -p "${install_dir}/${plugin}"
 
@@ -79,7 +77,7 @@ get_download_path() {
   local version=$3
 
   local download_dir
-  download_dir="$(asdf_data_dir)/downloads"
+  download_dir="$ASDF_DATA_DIR/downloads"
 
   [ -d "${download_dir}/${plugin}" ] || mkdir -p "${download_dir}/${plugin}"
 
@@ -94,11 +92,11 @@ get_download_path() {
 
 list_installed_versions() {
   local plugin_name=$1
-  local plugin_path
-  plugin_path=$(get_plugin_path "$plugin_name")
+  get_plugin_path "$plugin_name"
+  local plugin_path=$REPLY
 
   local plugin_installs_path
-  plugin_installs_path="$(asdf_data_dir)/installs/${plugin_name}"
+  plugin_installs_path="$ASDF_DATA_DIR/installs/${plugin_name}"
 
   if [ -d "$plugin_installs_path" ]; then
     for install in "${plugin_installs_path}"/*/; do
@@ -117,7 +115,7 @@ check_if_plugin_exists() {
     exit 1
   fi
 
-  if [ ! -d "$(asdf_data_dir)/plugins/$plugin_name" ]; then
+  if [ ! -d "$ASDF_DATA_DIR/plugins/$plugin_name" ]; then
     display_error "No such plugin: $plugin_name"
     exit 1
   fi
@@ -146,9 +144,9 @@ version_not_installed_text() {
 
 get_plugin_path() {
   if [ -n "$1" ]; then
-    printf "%s\n" "$(asdf_data_dir)/plugins/$1"
+    REPLY="$ASDF_DATA_DIR/plugins/$1"
   else
-    printf "%s\n" "$(asdf_data_dir)/plugins"
+    REPLY="$ASDF_DATA_DIR/plugins"
   fi
 }
 
@@ -163,7 +161,7 @@ get_version_in_dir() {
 
   local asdf_version
 
-  file_name=$(asdf_tool_versions_filename)
+  local file_name=$ASDF_DEFAULT_TOOL_VERSIONS_FILENAME
   asdf_version=$(parse_asdf_version_file "$search_path/$file_name" "$plugin_name")
 
   if [ -n "$asdf_version" ]; then
@@ -197,8 +195,8 @@ find_versions() {
     return 0
   fi
 
-  local plugin_path
-  plugin_path=$(get_plugin_path "$plugin_name")
+  get_plugin_path "$plugin_name"
+  local plugin_path=$REPLY
   local legacy_config
   legacy_config=$(get_asdf_config_value "legacy_version_file")
   local legacy_list_filenames_script
@@ -280,7 +278,8 @@ get_custom_executable_path() {
 
   # custom plugin hook for executable path
   if [ -x "${plugin_path}/bin/exec-path" ]; then
-    cmd=$(basename "$executable_path")
+    cmd=${executable_path%/}
+    cmd=${cmd##*/}
     local relative_path
     # shellcheck disable=SC2001
     relative_path=$(printf "%s\n" "$executable_path" | sed -e "s|${install_path}/||")
@@ -299,8 +298,9 @@ get_executable_path() {
   check_if_version_exists "$plugin_name" "$version"
 
   if [ "$version" = "system" ]; then
-    path=$(remove_path_from_path "$PATH" "$(asdf_data_dir)/shims")
-    cmd=$(basename "$executable_path")
+    path=$(remove_path_from_path "$PATH" "$ASDF_DATA_DIR/shims")
+    cmd=${executable_path%/}
+    cmd=${cmd##*/}
     cmd_path=$(PATH=$path command -v "$cmd" 2>&1)
     # shellcheck disable=SC2181
     if [ $? -ne 0 ]; then
@@ -339,8 +339,8 @@ parse_legacy_version_file() {
   local file_path=$1
   local plugin_name=$2
 
-  local plugin_path
-  plugin_path=$(get_plugin_path "$plugin_name")
+  get_plugin_path "$plugin_name"
+  local plugin_path=$REPLY
   local parse_legacy_script
   parse_legacy_script="${plugin_path}/bin/parse-legacy-file"
 
@@ -387,9 +387,8 @@ get_asdf_config_value_from_file() {
 
 get_asdf_config_value() {
   local key=$1
-  local config_path=
-  config_path=$(asdf_config_file)
-  local default_config_path=${ASDF_CONFIG_DEFAULT_FILE:-"$(asdf_dir)/defaults"}
+  local config_path="$ASDF_CONFIG_FILE"
+  local default_config_path=${ASDF_CONFIG_DEFAULT_FILE:-"$ASDF_DIR/defaults"}
 
   local local_config_path
   local_config_path="$(find_file_upwards ".asdfrc")"
@@ -411,7 +410,7 @@ repository_needs_update() {
   if [ "never" != "$plugin_repository_last_check_duration" ]; then
     local update_file_dir
     local update_file_name
-    update_file_dir="$(asdf_data_dir)/tmp"
+    update_file_dir="$ASDF_DATA_DIR/tmp"
     update_file_name="repo-updated"
     # `find` outputs filename if it has not been modified in plugin_repository_last_check_duration setting.
     sync_required=$(find "$update_file_dir" -name "$update_file_name" -type f -mmin +"${plugin_repository_last_check_duration:-60}" -print)
@@ -431,7 +430,7 @@ initialize_or_update_plugin_repository() {
   fi
 
   repository_url=$(asdf_plugin_repository_url)
-  repository_path=$(asdf_data_dir)/repository
+  repository_path=$ASDF_DATA_DIR/repository
 
   if [ ! -d "$repository_path" ]; then
     printf "initializing plugin repository..."
@@ -442,15 +441,15 @@ initialize_or_update_plugin_repository() {
     git -C "$repository_path" reset --hard origin/master
   fi
 
-  [ -d "$(asdf_data_dir)/tmp" ] || mkdir -p "$(asdf_data_dir)/tmp"
-  touch "$(asdf_data_dir)/tmp/repo-updated"
+  [ -d "$ASDF_DATA_DIR/tmp" ] || mkdir -p "$ASDF_DATA_DIR/tmp"
+  touch "$ASDF_DATA_DIR/tmp/repo-updated"
 }
 
 get_plugin_source_url() {
   local plugin_name=$1
   local plugin_config
 
-  plugin_config="$(asdf_data_dir)/repository/plugins/$plugin_name"
+  plugin_config="$ASDF_DATA_DIR/repository/plugins/$plugin_name"
 
   if [ -f "$plugin_config" ]; then
     grep "repository" "$plugin_config" | awk -F'=' '{print $2}' | sed 's/ //'
@@ -458,7 +457,8 @@ get_plugin_source_url() {
 }
 
 find_tool_versions() {
-  find_file_upwards "$(asdf_tool_versions_filename)"
+  local file_name=$ASDF_DEFAULT_TOOL_VERSIONS_FILENAME
+  find_file_upwards "$file_name"
 }
 
 find_file_upwards() {
@@ -505,8 +505,8 @@ list_plugin_bin_paths() {
   local plugin_name=$1
   local version=$2
   local install_type=$3
-  local plugin_path
-  plugin_path=$(get_plugin_path "$plugin_name")
+  get_plugin_path "$plugin_name"
+  local plugin_path=$REPLY
   local install_path
   install_path=$(get_install_path "$plugin_name" "$install_type" "$version")
 
@@ -543,8 +543,8 @@ list_plugin_exec_paths() {
     local version="${version_info[0]}"
   fi
 
-  local plugin_shims_path
-  plugin_shims_path=$(get_plugin_path "$plugin_name")/shims
+  get_plugin_path "$plugin_name"
+  local plugin_shims_path=$REPLY/shims
   if [ -d "$plugin_shims_path" ]; then
     printf "%s\n" "$plugin_shims_path"
   fi
@@ -580,8 +580,8 @@ with_plugin_env() {
     return $?
   fi
 
-  local plugin_path
-  plugin_path=$(get_plugin_path "$plugin_name")
+  get_plugin_path "$plugin_name"
+  local plugin_path=$REPLY
 
   # add the plugin listed exec paths to PATH
   local path exec_paths
@@ -635,14 +635,15 @@ is_executable() {
 plugin_shims() {
   local plugin_name=$1
   local full_version=$2
-  grep -lx "# asdf-plugin: $plugin_name $full_version" "$(asdf_data_dir)/shims"/* 2>/dev/null
+  grep -lx "# asdf-plugin: $plugin_name $full_version" "$ASDF_DATA_DIR/shims"/* 2>/dev/null
 }
 
 shim_plugin_versions() {
   local executable_name
-  executable_name=$(basename "$1")
+  executable_name=${1%/}
+  executable_name=${executable_name##*/}
   local shim_path
-  shim_path="$(asdf_data_dir)/shims/${executable_name}"
+  shim_path="$ASDF_DATA_DIR/shims/${executable_name}"
   if [ -x "$shim_path" ]; then
     grep "# asdf-plugin: " "$shim_path" 2>/dev/null | sed -e "s/# asdf-plugin: //" | uniq
   else
@@ -653,9 +654,10 @@ shim_plugin_versions() {
 
 shim_plugins() {
   local executable_name
-  executable_name=$(basename "$1")
+  executable_name=${1%/}
+  executable_name=${executable_name##*/}
   local shim_path
-  shim_path="$(asdf_data_dir)/shims/${executable_name}"
+  shim_path="$ASDF_DATA_DIR/shims/${executable_name}"
   if [ -x "$shim_path" ]; then
     grep "# asdf-plugin: " "$shim_path" 2>/dev/null | sed -e "s/# asdf-plugin: //" | cut -d' ' -f 1 | uniq
   else
@@ -697,7 +699,7 @@ get_shim_versions() {
 
 preset_versions() {
   shim_name=$1
-  shim_plugin_versions "${shim_name}" | cut -d' ' -f 1 | uniq | xargs -IPLUGIN bash -c ". $(asdf_dir)/lib/utils.bash; printf \"%s %s\n\" PLUGIN \$(get_preset_version_for PLUGIN)"
+  shim_plugin_versions "${shim_name}" | cut -d' ' -f 1 | uniq | xargs -IPLUGIN bash -c ". $ASDF_DIR/lib/utils.bash; printf \"%s %s\n\" PLUGIN \$(get_preset_version_for PLUGIN)"
 }
 
 select_from_preset_version() {
@@ -757,10 +759,11 @@ select_version() {
 
 with_shim_executable() {
   local shim_name
-  shim_name=$(basename "$1")
+  shim_name=${1%/}
+  shim_name=${shim_name##*/}
   local shim_exec="${2}"
 
-  if [ ! -f "$(asdf_data_dir)/shims/${shim_name}" ]; then
+  if [ ! -f "$ASDF_DATA_DIR/shims/${shim_name}" ]; then
     printf "%s %s %s\n" "unknown command:" "${shim_name}." "Perhaps you have to reshim?" >&2
     return 1
   fi
@@ -775,16 +778,16 @@ with_shim_executable() {
   if [ -n "$selected_version" ]; then
     local plugin_name
     local full_version
-    local plugin_path
 
     IFS=' ' read -r plugin_name full_version <<<"$selected_version"
-    plugin_path=$(get_plugin_path "$plugin_name")
+    get_plugin_path "$plugin_name"
+    local plugin_path=$REPLY
 
     # This function does get invoked, but shellcheck sees it as unused code
     # shellcheck disable=SC2317
     run_within_env() {
       local path
-      path=$(remove_path_from_path "$PATH" "$(asdf_data_dir)/shims")
+      path=$(remove_path_from_path "$PATH" "$ASDF_DATA_DIR/shims")
 
       executable_path=$(PATH=$path command -v "$shim_name")
 
@@ -878,21 +881,21 @@ util_validate_no_carriage_returns() {
 
 get_plugin_remote_url() {
   local plugin_name="$1"
-  local plugin_path
-  plugin_path="$(get_plugin_path "$plugin_name")"
+  get_plugin_path "$plugin_name"
+  local plugin_path=$REPLY
   git --git-dir "$plugin_path/.git" remote get-url origin 2>/dev/null
 }
 
 get_plugin_remote_branch() {
   local plugin_name="$1"
-  local plugin_path
-  plugin_path="$(get_plugin_path "$plugin_name")"
+  get_plugin_path "$plugin_name"
+  local plugin_path=$REPLY
   git --git-dir "$plugin_path/.git" rev-parse --abbrev-ref HEAD 2>/dev/null
 }
 
 get_plugin_remote_gitref() {
   local plugin_name="$1"
-  local plugin_path
-  plugin_path="$(get_plugin_path "$plugin_name")"
+  get_plugin_path "$plugin_name"
+  local plugin_path=$REPLY
   git --git-dir "$plugin_path/.git" rev-parse --short HEAD 2>/dev/null
 }

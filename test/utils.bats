@@ -187,20 +187,18 @@ teardown() {
   [ "$output" = "0.2.0|ASDF_DUMMY_VERSION environment variable" ]
 }
 
-@test "asdf_data_dir should return user dir if configured" {
+@test "get_asdf_data_dir should return user dir if configured" {
   ASDF_DATA_DIR="/tmp/wadus"
 
-  run asdf_data_dir
-  [ "$status" -eq 0 ]
-  [ "$output" = "$ASDF_DATA_DIR" ]
+  get_asdf_data_dir
+  [ "$REPLY" = "$ASDF_DATA_DIR" ]
 }
 
-@test "asdf_data_dir should return ~/.asdf when ASDF_DATA_DIR is not set" {
+@test "get_asdf_data_dir should return ~/.asdf when ASDF_DATA_DIR is not set" {
   unset ASDF_DATA_DIR
 
-  run asdf_data_dir
-  [ "$status" -eq 0 ]
-  [ "$output" = "$HOME/.asdf" ]
+  get_asdf_data_dir
+  [ "$REPLY" = "$HOME/.asdf" ]
 }
 
 @test "check_if_plugin_exists should work with a custom data directory" {

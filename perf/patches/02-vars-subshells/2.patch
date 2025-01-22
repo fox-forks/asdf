@@ -1,0 +1,166 @@
+diff --git a/bin/asdf b/bin/asdf
+index a0962d8..9649b87 100755
+--- a/bin/asdf
++++ b/bin/asdf
+@@ -29,7 +29,7 @@ find_cmd() {
+ 
+ find_asdf_cmd() {
+   local asdf_cmd_dir
+-  asdf_cmd_dir="$(asdf_dir)/lib/commands"
++  asdf_cmd_dir="$ASDF_DIR/lib/commands"
+   case "$1" in
+   'exec' | 'current' | 'env' | 'global' | 'install' | 'latest' | 'local' | \
+     'reshim' | 'uninstall' | 'update' | 'where' | 'which' | \
+@@ -81,8 +81,8 @@ asdf_cmd() {
+   ASDF_DATA_DIR=$(asdf_data_dir)
+   export ASDF_DATA_DIR
+ 
+-  ASDF_DIR=$(asdf_dir)
+-  export ASDF_DIR
++  get_asdf_dir
++  export ASDF_DIR=$REPLY
+ 
+   local result=
+   result="$(find_asdf_cmd "$@")"
+@@ -113,8 +113,7 @@ asdf_cmd() {
+     # shellcheck source=/dev/null
+     . "$ASDF_CMD_FILE"
+   else
+-    local asdf_cmd_dir
+-    asdf_cmd_dir="$(asdf_dir)/lib/commands"
++    local asdf_cmd_dir="$ASDF_DIR/lib/commands"
+     printf "%s\n" "Unknown command: \`asdf ${*}\`" >&2
+     # shellcheck source=lib/commands/command-help.bash
+     . "$asdf_cmd_dir/command-help.bash" >&2
+diff --git a/lib/commands/command-help.bash b/lib/commands/command-help.bash
+index 5453185..e5185b9 100644
+--- a/lib/commands/command-help.bash
++++ b/lib/commands/command-help.bash
+@@ -4,7 +4,7 @@
+ 
+ asdf_help() {
+   printf "version: %s\n\n" "$(asdf_version)"
+-  cat "$(asdf_dir)/help.txt"
++  cat "$ASDF_DIR/help.txt"
+ }
+ 
+ asdf_moto() {
+diff --git a/lib/commands/command-plugin-test.bash b/lib/commands/command-plugin-test.bash
+index 791ff5f..6572a14 100644
+--- a/lib/commands/command-plugin-test.bash
++++ b/lib/commands/command-plugin-test.bash
+@@ -68,9 +68,9 @@ plugin_test_command() {
+   fi
+ 
+   TEST_DIR=$(mktemp -dt asdf.XXXX)
+-  cp -R "$(asdf_dir)/bin" "$TEST_DIR"
+-  cp -R "$(asdf_dir)/lib" "$TEST_DIR"
+-  cp "$(asdf_dir)/asdf.sh" "$TEST_DIR"
++  cp -R "$ASDF_DIR/bin" "$TEST_DIR"
++  cp -R "$ASDF_DIR/lib" "$TEST_DIR"
++  cp "$ASDF_DIR/asdf.sh" "$TEST_DIR"
+ 
+   plugin_test() {
+     export ASDF_DIR=$TEST_DIR
+diff --git a/lib/commands/command-update.bash b/lib/commands/command-update.bash
+index f991264..3b37743 100644
+--- a/lib/commands/command-update.bash
++++ b/lib/commands/command-update.bash
+@@ -4,7 +4,7 @@ update_command() {
+   local update_to_head=$1
+ 
+   (
+-    cd "$(asdf_dir)" || exit 1
++    cd "$ASDF_DIR" || exit 1
+ 
+     if [ -f asdf_updates_disabled ] || ! git rev-parse --is-inside-work-tree &>/dev/null; then
+       printf "Update command disabled. Please use the package manager that you used to install asdf to upgrade asdf.\n"
+diff --git a/lib/commands/reshim.bash b/lib/commands/reshim.bash
+index 82e6614..beac62f 100644
+--- a/lib/commands/reshim.bash
++++ b/lib/commands/reshim.bash
+@@ -107,7 +107,7 @@ EOF
+   cat <<EOF >"$shim_path"
+ #!/usr/bin/env bash
+ $(sort -u <"$temp_versions_path")
+-exec $(asdf_dir)/bin/asdf exec "${executable_name}" "\$@" # asdf_allow: ' asdf '
++exec $ASDF_DIR/bin/asdf exec "${executable_name}" "\$@" # asdf_allow: ' asdf '
+ EOF
+ 
+   rm "$temp_versions_path"
+diff --git a/lib/utils.bash b/lib/utils.bash
+index 5979974..7c11ddf 100644
+--- a/lib/utils.bash
++++ b/lib/utils.bash
+@@ -7,9 +7,9 @@ GREP_COLORS=
+ 
+ asdf_version() {
+   local version git_rev
+-  version="v$(cat "$(asdf_dir)/version.txt")"
+-  if [ -d "$(asdf_dir)/.git" ]; then
+-    git_rev="$(git --git-dir "$(asdf_dir)/.git" rev-parse --short HEAD)"
++  version="v$(<"$ASDF_DIR/version.txt")"
++  if [ -d "$ASDF_DIR/.git" ]; then
++    git_rev="$(git --git-dir "$ASDF_DIR/.git" rev-parse --short HEAD)"
+     printf "%s-%s\n" "$version" "$git_rev"
+   else
+     printf "%s\n" "$version"
+@@ -32,21 +32,24 @@ asdf_data_dir() {
+   elif [ -n "$HOME" ]; then
+     data_dir="$HOME/.asdf"
+   else
+-    data_dir=$(asdf_dir)
++    get_asdf_dir
++    data_dir=$REPLY
+   fi
+ 
+   printf "%s\n" "$data_dir"
+ }
+ 
+-asdf_dir() {
++get_asdf_dir() {
++  unset -v REPLY
++
+   if [ -z "$ASDF_DIR" ]; then
+     local current_script_path=${BASH_SOURCE[0]}
+-    printf '%s\n' "$(
++    REPLY=$(
+       cd -- "$(dirname "$(dirname "$current_script_path")")" || exit
+       printf '%s\n' "$PWD"
+-    )"
++    )
+   else
+-    printf '%s\n' "$ASDF_DIR"
++    REPLY="$ASDF_DIR"
+   fi
+ }
+ 
+@@ -391,7 +394,7 @@ get_asdf_config_value() {
+   local key=$1
+   local config_path=
+   config_path=$(asdf_config_file)
+-  local default_config_path=${ASDF_CONFIG_DEFAULT_FILE:-"$(asdf_dir)/defaults"}
++  local default_config_path=${ASDF_CONFIG_DEFAULT_FILE:-"$ASDF_DIR/defaults"}
+ 
+   local local_config_path
+   local_config_path="$(find_file_upwards ".asdfrc")"
+@@ -701,7 +704,7 @@ get_shim_versions() {
+ 
+ preset_versions() {
+   shim_name=$1
+-  shim_plugin_versions "${shim_name}" | cut -d' ' -f 1 | uniq | xargs -IPLUGIN bash -c ". $(asdf_dir)/lib/utils.bash; printf \"%s %s\n\" PLUGIN \$(get_preset_version_for PLUGIN)"
++  shim_plugin_versions "${shim_name}" | cut -d' ' -f 1 | uniq | xargs -IPLUGIN bash -c ". $ASDF_DIR/lib/utils.bash; printf \"%s %s\n\" PLUGIN \$(get_preset_version_for PLUGIN)"
+ }
+ 
+ select_from_preset_version() {
+diff --git a/test/test_helpers.bash b/test/test_helpers.bash
+index 8a23931..3257ec7 100644
+--- a/test/test_helpers.bash
++++ b/test/test_helpers.bash
+@@ -109,5 +109,5 @@ clean_asdf_dir() {
+ 
+ setup_repo() {
+   cp -r "$BATS_TEST_DIRNAME/fixtures/dummy_plugins_repo" "$ASDF_DIR/repository"
+-  touch "$(asdf_dir)/tmp/repo-updated"
++  touch "$ASDF_DIR/tmp/repo-updated"
+ }

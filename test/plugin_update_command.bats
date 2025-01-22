@@ -121,8 +121,8 @@ teardown() {
 }
 
 @test "asdf plugin-update executes post-plugin update script" {
-  local plugin_path
-  plugin_path="$(get_plugin_path dummy)"
+  get_plugin_path dummy
+  local plugin_path=$REPLY
 
   old_ref="$(git --git-dir "$plugin_path/.git" --work-tree "$plugin_path" rev-parse --short HEAD)"
   run asdf plugin-update dummy
@@ -133,8 +133,8 @@ teardown() {
 }
 
 @test "asdf plugin-update executes post-plugin update script if git-ref updated" {
-  local plugin_path
-  plugin_path="$(get_plugin_path dummy)"
+  get_plugin_path dummy
+  local plugin_path=$REPLY
 
   old_ref="$(git --git-dir "$plugin_path/.git" --work-tree "$plugin_path" rev-parse --short HEAD)"
 
@@ -161,8 +161,8 @@ teardown() {
 pre_asdf_plugin_update = echo UPDATE ${@}
 EOM
 
-  local plugin_path
-  plugin_path="$(get_plugin_path dummy)"
+  get_plugin_path dummy
+  local plugin_path=$REPLY
 
   old_ref="$(git --git-dir "$plugin_path/.git" --work-tree "$plugin_path" rev-parse --short HEAD)"
   run asdf plugin-update dummy
@@ -177,8 +177,8 @@ EOM
 pre_asdf_plugin_update_dummy = echo UPDATE
 EOM
 
-  local plugin_path
-  plugin_path="$(get_plugin_path dummy)"
+  get_plugin_path dummy
+  local plugin_path=$REPLY
 
   old_ref="$(git --git-dir "$plugin_path/.git" --work-tree "$plugin_path" rev-parse --short HEAD)"
   run asdf plugin-update dummy
@@ -193,8 +193,8 @@ EOM
 post_asdf_plugin_update = echo UPDATE ${@}
 EOM
 
-  local plugin_path
-  plugin_path="$(get_plugin_path dummy)"
+  get_plugin_path dummy
+  local plugin_path=$REPLY
 
   old_ref="$(git --git-dir "$plugin_path/.git" --work-tree "$plugin_path" rev-parse --short HEAD)"
   run asdf plugin-update dummy
@@ -210,8 +210,8 @@ UPDATE dummy"
 post_asdf_plugin_update_dummy = echo UPDATE
 EOM
 
-  local plugin_path
-  plugin_path="$(get_plugin_path dummy)"
+  get_plugin_path dummy
+  local plugin_path=$REPLY
 
   old_ref="$(git --git-dir "$plugin_path/.git" --work-tree "$plugin_path" rev-parse --short HEAD)"
   run asdf plugin-update dummy
@@ -223,8 +223,8 @@ UPDATE"
 }
 
 @test "asdf plugin-update prints the location of plugin (specific)" {
-  local plugin_path
-  plugin_path="$(get_plugin_path dummy)"
+  get_plugin_path dummy
+  local plugin_path=$REPLY
   run asdf plugin-update dummy
 
   local expected_output="Location of dummy plugin: $plugin_path"

@@ -3,7 +3,7 @@
 bats_require_minimum_version 1.7.0
 
 # shellcheck source=lib/utils.bash
-. "$(dirname "$BATS_TEST_DIRNAME")"/lib/utils.bash
+. "$BATS_TEST_DIRNAME/.."/lib/utils.bash
 
 setup_asdf_dir() {
   if [ "$BATS_TEST_NAME" = 'test_shim_exec_should_use_path_executable_when_specified_version_path-3a-3cpath-3e' ]; then
@@ -13,12 +13,24 @@ setup_asdf_dir() {
   fi
 
   HOME="$BASE_DIR/home"
+
+  # Internal Variables
+  get_asdf_tool_versions_filename
+  ASDF_DEFAULT_TOOL_VERSIONS_FILENAME=$REPLY
+
+  get_asdf_config_file
+  ASDF_CONFIG_FILE=$REPLY
+
+  get_asdf_data_dir
+  ASDF_DATA_DIR="$REPLY"
+
   ASDF_DIR="$HOME/.asdf"
+
   mkdir -p "$ASDF_DIR/plugins"
   mkdir -p "$ASDF_DIR/installs"
   mkdir -p "$ASDF_DIR/shims"
   mkdir -p "$ASDF_DIR/tmp"
-  ASDF_BIN="$(dirname "$BATS_TEST_DIRNAME")/bin"
+  ASDF_BIN="$BATS_TEST_DIRNAME/../bin"
 
   # shellcheck disable=SC2031
   PATH="$ASDF_BIN:$ASDF_DIR/shims:$PATH"
@@ -109,5 +121,5 @@ clean_asdf_dir() {
 
 setup_repo() {
   cp -r "$BATS_TEST_DIRNAME/fixtures/dummy_plugins_repo" "$ASDF_DIR/repository"
-  touch "$(asdf_dir)/tmp/repo-updated"
+  touch "$ASDF_DIR/tmp/repo-updated"
 }

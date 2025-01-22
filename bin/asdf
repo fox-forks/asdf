@@ -6,7 +6,7 @@ if [[ "${ASDF_DEBUG}" == "1" ]]; then
 fi
 
 # shellcheck source=lib/utils.bash
-. "$(dirname "$(dirname "$0")")/lib/utils.bash"
+. "${0%/*/*}/lib/utils.bash"
 
 find_cmd() {
   local cmd_dir="$1"
@@ -21,28 +21,32 @@ find_cmd() {
   done
 
   if [ -f "$cmd_dir/$cmd_name" ]; then
-    printf "%s %s\n" "$cmd_dir/$cmd_name" "$((args_offset + 1))"
+    REPLY_CMDFILE="$cmd_dir/$cmd_name"
+    REPLY_OFFSET="$((args_offset + 1))"
   elif [ -f "$cmd_dir/command.bash" ]; then
-    printf "%s %s\n" "$cmd_dir/command.bash" 1
+    REPLY_CMDFILE="$cmd_dir/command.bash"
+    REPLY_OFFSET=1
   fi
 }
 
 find_asdf_cmd() {
-  local asdf_cmd_dir
-  asdf_cmd_dir="$(asdf_dir)/lib/commands"
+  local asdf_cmd_dir="$ASDF_DIR/lib/commands"
   case "$1" in
   'exec' | 'current' | 'env' | 'global' | 'install' | 'latest' | 'local' | \
     'reshim' | 'uninstall' | 'update' | 'where' | 'which' | \
     'export-shell-version')
-    printf "%s %s\n" "$asdf_cmd_dir/command-$1.bash" 2
+    REPLY_CMDFILE="$asdf_cmd_dir/command-$1.bash"
+    REPLY_OFFSET=2
     ;;
 
   '' | '--help' | '-h' | 'help')
-    printf "%s %s\n" "$asdf_cmd_dir/command-help.bash" 2
+    REPLY_CMDFILE="$asdf_cmd_dir/command-help.bash"
+    REPLY_OFFSET=2
     ;;
 
   '--version' | 'version')
-    printf "%s %s\n" "$asdf_cmd_dir/command-version.bash" 2
+    REPLY_CMDFILE="$asdf_cmd_dir/command-version.bash"
+    REPLY_OFFSET=2
     ;;
 
   *)
@@ -52,14 +56,14 @@ find_asdf_cmd() {
 }
 
 find_plugin_cmd() {
-  local ASDF_CMD_FILE args_offset
-  local result=
-  result="$(find_cmd "$(get_plugin_path "$1")/lib/commands" "${@:2}")"
-  ASDF_CMD_FILE=${result% *}
-  args_offset=${result##* }
+  get_plugin_path "$1"
+  find_cmd "$REPLY/lib/commands" "${@:2}"
+  local ASDF_CMD_FILE=$REPLY_CMDFILE
+  local args_offset=$REPLY_OFFSET
+
   if [ -n "$ASDF_CMD_FILE" ]; then
-    args_offset=$((args_offset + 1)) # since the first argument is the plugin name
-    printf "%s %s\n" "$ASDF_CMD_FILE" "$args_offset"
+    REPLY_CMDFILE=$ASDF_CMD_FILE
+    REPLY_OFFSET=$((args_offset + 1)) # since the first argument is the plugin name
   fi
 }
 
@@ -72,27 +76,27 @@ asdf_cmd() {
   fi
 
   # Internal Variables
-  ASDF_DEFAULT_TOOL_VERSIONS_FILENAME=$(asdf_tool_versions_filename)
-  export ASDF_DEFAULT_TOOL_VERSIONS_FILENAME
+  get_asdf_tool_versions_filename
+  export ASDF_DEFAULT_TOOL_VERSIONS_FILENAME=$REPLY
 
-  ASDF_CONFIG_FILE=$(asdf_config_file)
-  export ASDF_CONFIG_FILE
+  get_asdf_config_file
+  export ASDF_CONFIG_FILE=$REPLY
 
-  ASDF_DATA_DIR=$(asdf_data_dir)
-  export ASDF_DATA_DIR
+  get_asdf_data_dir
+  export ASDF_DATA_DIR=$REPLY
 
-  ASDF_DIR=$(asdf_dir)
-  export ASDF_DIR
+  get_asdf_dir
+  export ASDF_DIR=$REPLY
 
-  local result=
-  result="$(find_asdf_cmd "$@")"
-  ASDF_CMD_FILE=${result% *}
-  args_offset=${result##* }
+  find_asdf_cmd "$@"
+  ASDF_CMD_FILE=$REPLY_CMDFILE
+  args_offset=$REPLY_OFFSET
   if [ -z "$ASDF_CMD_FILE" ]; then
-    result="$(find_plugin_cmd "$@")"
-    ASDF_CMD_FILE=${result% *}
-    args_offset=${result##* }
+    find_plugin_cmd "$@"
+    ASDF_CMD_FILE=$REPLY_CMDFILE
+    args_offset=$REPLY_OFFSET
   fi
+  unset -v REPLY_CMDFILE REPLY_OFFSET
 
   if [ -x "$ASDF_CMD_FILE" ]; then
     # When '$ASDF_CMD_FILE' is an executable, we are executing a command directly from a plugin.
@@ -113,8 +117,7 @@ asdf_cmd() {
     # shellcheck source=/dev/null
     . "$ASDF_CMD_FILE"
   else
-    local asdf_cmd_dir
-    asdf_cmd_dir="$(asdf_dir)/lib/commands"
+    local asdf_cmd_dir="$ASDF_DIR/lib/commands"
     printf "%s\n" "Unknown command: \`asdf ${*}\`" >&2
     # shellcheck source=lib/commands/command-help.bash
     . "$asdf_cmd_dir/command-help.bash" >&2

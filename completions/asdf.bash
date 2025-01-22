@@ -3,7 +3,7 @@ _asdf_list_shims() (
   shopt -s nullglob # globs that don't match should disappear
   shopt -u failglob # globs that don't match shouldn't fail
   for shim in "${ASDF_DATA_DIR:-$HOME/.asdf}"/shims/*; do
-    basename "$shim"
+    printf '%s\n' "${shim##*/}"
   done
 )
 

@@ -5,18 +5,20 @@ list_command() {
   local query=$2
 
   if [ -z "$plugin_name" ]; then
-    local plugins_path
-    plugins_path=$(get_plugin_path)
+    get_plugin_path
+    local plugins_path=$REPLY
 
-    if find "$plugins_path" -mindepth 1 -type d &>/dev/null; then
-      for plugin_path in "$plugins_path"/*/; do
-        plugin_name=$(basename "$plugin_path")
-        printf "%s\n" "$plugin_name"
-        display_installed_versions "$plugin_name" "$query"
-      done
-    else
-      printf "%s\n" 'No plugins installed'
-    fi
+    for plugin_path in "$plugins_path"/*/; do
+      if [ ! -d "$plugin_path" ]; then
+        printf "%s\n" 'No plugins installed'
+        break
+      fi
+
+      plugin_name=${plugin_path%/}
+      plugin_name=${plugin_name##*/}
+      printf "%s\n" "$plugin_name"
+      display_installed_versions "$plugin_name" "$query"
+    done
   else
     check_if_plugin_exists "$plugin_name"
     display_installed_versions "$plugin_name" "$query"
